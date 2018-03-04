@@ -1,61 +1,97 @@
-#Just testing the docker-py SDK
+
+import os 
+from subprocess import check_output
+import re
 import docker
 
 class NVDockerClient:
 
-    def __init__(self, config):
+    def __init__(self):
         self.docker_client = docker.from_env(version="auto")
-        self.gpu_devices = None
-        if "gpu_devices" in config:
-            self.gpu_devices = config["gpu_devices"]
 
     #TODO: Testing on MultiGPU
-    def create_container(self, image, config={}):
-        volumes = None
-        if "volumes" in config:
-            volumes = config["volumes"]
-        ports = None
-        if "ports" in config:
-            ports = config["ports"]
-        workdir = None
-        if "workdir" in config:
-            home_dir = config["workdir"]
-        attached_devices = self.gpu_devices 
-        if "attached_devices" in config:
-            attached_devices = config["attached_devices"]
-        auto_remove = True
-        if "auto_remove" in config:
-            auto_remove = config["auto_remove"]
-        detach = True
-        if "detach" in config:
-            detach = config["detach"]
+    def create_container(self, image, **kwargs):
+        #defaults
+        config = {
+            "auto_remove":False,
+            "detach":True
+        }
+        environment = {}
+        for arg in kwargs:
+            if arg == "driver_capabilities":
+                environment["NVIDIA_DRIVER_CAPABILITIES"] = kwargs["driver_capabilities"]
+            elif arg == "visible_devices" in kwargs:
+                environment["NVIDIA_VISIBLE_DEVICES"] = kwargs["visible_devices"]
+            elif arg == "disable_require" in kwargs:
+                environment["NVIDIA_DISABLE_REQUIRE"] = kwargs["disable_require"]
+            elif arg == "require":
+                if "cuda" in kwargs["require"]:
+                    environment["NVIDIA_REQUIRE_CUDA"] = kwargs["require"]["cuda"]
+                if "driver" in kwargs["require"]:
+                    environment["NVIDIA_REQUIRE_DRIVER"] = kwargs["require"]["driver"]
+                if "arch" in kwargs["require"]:
+                    environment["NVIDIA_REQUIRE_ARCH"] = kwargs["require"]["arch"]
+            elif arg == "cuda_version":
+                print("WARNING: the CUDA_VERSION enviorment variable is a legacy variable, consider moving to NVIDIA_REQUIRE_CUDA")
+                environment["CUDA_VERSION"] = kwargs["cuda_version"]
+            elif arg == "environment":
+                if type(kwargs["environment"]) is dict:
+                    for k,v in kwargs["environment"]:
+                        environment[k] = v
+                elif type(kwargs["environment"]) is list:
+                    for e in kwargs["environment"]:
+                        kv = e.split("=")
+                        assert(len(kv) == 2), "Does not follow the format SOMEVAR=xxx"
+                        environment[kv[0]] = kv[1]
+            else:
+                config[arg] = kwargs[arg]
+        config["environment"] = environment
+        config["runtime"] = "nvidia"
+        print(config)
         
-        c = self.docker_client.containers.run(image, "", auto_remove=auto_remove, ports=ports, devices=attached_devices, volumes=volumes, detach=detach, working_dir=workdir)
-        return c.id
+        c = self.docker_client.containers.run(image, "", **config)
+
+        return c
 
 
-    def run(self, image, cmd="", config={}):
-        volumes = None
-        if "volumes" in config:
-            volumes = config["volumes"]
-        ports = None
-        if "ports" in config:
-            ports = config["ports"]
-        workdir = None
-        if "workdir" in config:
-            home_dir = config["workdir"]
-        attached_devices = self.gpu_devices 
-        if "attached_devices" in config:
-            attached_devices = config["attached_devices"]
-        auto_remove = True
-        if "auto_remove" in config:
-            auto_remove = config["auto_remove"]
-        detach = True
-        if "detach" in config:
-            detach = config["detach"]
-        
-        c = self.docker_client.containers.run(image, cmd, auto_remove=auto_remove, ports=ports, devices=attached_devices, volumes=volumes, detach=detach, working_dir=workdir)
-        if cmd = "":
+    def run(self, image, cmd="", **kwargs):
+        #defaults
+        config = {}
+        environment = {}
+        for arg in kwargs:
+            if arg == "driver_capabilities":
+                environment["NVIDIA_DRIVER_CAPABILITIES"] = kwargs["driver_capabilities"]
+            elif arg == "visible_devices" in kwargs:
+                environment["NVIDIA_VISIBLE_DEVICES"] = kwargs["visible_devices"]
+            elif arg == "disable_require" in kwargs:
+                environment["NVIDIA_DISABLE_REQUIRE"] = kwargs["disable_require"]
+            elif arg == "require":
+                if "cuda" in kwargs["require"]:
+                    environment["NVIDIA_REQUIRE_CUDA"] = kwargs["require"]["cuda"]
+                if "driver" in kwargs["require"]:
+                    environment["NVIDIA_REQUIRE_DRIVER"] = kwargs["require"]["driver"]
+                if "arch" in kwargs["require"]:
+                    environment["NVIDIA_REQUIRE_ARCH"] = kwargs["require"]["arch"]
+            elif arg == "cuda_version":
+                print("WARNING: the CUDA_VERSION enviorment variable is a legacy variable, consider moving to NVIDIA_REQUIRE_CUDA")
+                environment["CUDA_VERSION"] = kwargs["cuda_version"]
+            elif arg == "environment":
+                if type(kwargs["environment"]) is dict:
+                    for k,v in kwargs["environment"]:
+                        environment[k] = v
+                elif type(kwargs["environment"]) is list:
+                    for e in kwargs["environment"]:
+                        kv = e.split("=")
+                        assert(len(kv) == 2), "Does not follow the format SOMEVAR=xxx"
+                        environment[kv[0]] = kv[1]
+            else:
+                config[arg] = kwargs[arg]
+        config["environment"] = environment
+        config["runtime"] = "nvidia"
+
+        c = self.docker_client.containers.run(image, cmd, **config)
+
+        if cmd == "":
             return c.id
         else:
             return c
@@ -90,3 +126,30 @@ class NVDockerClient:
     def exec_run(self, cid, cmd):
         c = self.docker_client.containers.get(cid)
         return c.exec_run(cmd)
+
+    @staticmethod
+    def list_gpus():
+        output = check_output(["nvidia-smi", "-L"]).decode("utf-8") 
+        regex = re.compile(r"GPU (?P<id>\d+):")
+        gpus = []
+        for line in output.strip().split("\n"):
+            m = regex.match(line)
+            assert m, "unable to parse " + line
+            gpus.append(int(m.group("id")))
+        return gpus
+
+    @staticmethod
+    def gpu_memory_usage():
+        output = check_output(["nvidia-smi"]).decode("utf-8")
+        smi_output = output[output.find("GPU Memory"):]
+        rows = smi_output.split("\n")
+        regex = re.compile(r"[|]\s+?(?P<id>\d+)\D+?(?P<pid>\d+).+[ ](?P<usage>\d+)MiB")
+        usage = {gpu_id: 0 for gpu_id in NVDockerClient.list_gpus()}
+        for row in smi_output.split("\n"):
+            gpu = regex.search(row)
+            if not gpu:
+                continue
+            id = int(gpu.group("id"))
+            memory = int(gpu.group("usage"))
+            usage[id] += memory
+        return usage

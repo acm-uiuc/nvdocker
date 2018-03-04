@@ -33,7 +33,7 @@ This variable controls which GPUs will be made accessible inside the container.
 This option controls which driver libraries/binaries will be mounted inside the container.
 
 - Possible values
-    - `compute,video`, `graphics,utility` …: a comma-separated list of driver features the container needs,
+    - `compute,video,graphics,utility` …: a comma-separated list of driver features the container needs,
     - `all`: enable all available driver capabilities.
     - *empty* or *unset*: use default driver capability: `utility`.
 
@@ -44,8 +44,6 @@ This option controls which driver libraries/binaries will be mounted inside the 
     - `utility`: required for using `nvidia-smi` and NVML,
     - `video`: required for using the Video Codec SDK.
 
-###_Not yet supported_
-```
 ### `require_*`
 A logical expression to define constraints on the configurations supported by the container.  
 
@@ -58,21 +56,20 @@ A logical expression to define constraints on the configurations supported by th
 Multiple constraints can be expressed in a single environment variable: space-separated constraints are ORed, comma-separated constraints are ANDed.  
 Multiple environment variables of the form `rew` are ANDed together.
 
-### `NVIDIA_DISABLE_REQUIRE`
+#### `NVIDIA_DISABLE_REQUIRE`
 Single switch to disable all the constraints of the form `NVIDIA_REQUIRE_*`.
 
-### `NVIDIA_REQUIRE_CUDA`
+#### `NVIDIA_REQUIRE_CUDA`
 
 The version of the CUDA toolkit used by the container. It is an instance of the generic `NVIDIA_REQUIRE_*` case and it is set by official CUDA images.
 If the version of the NVIDIA driver is insufficient to run this version of CUDA, the container will not be started.
 
-#### Possible values
+##### Possible values
 * `cuda>=7.5`, `cuda>=8.0`, `cuda>=9.0` …: any valid CUDA version in the form `major.minor`.
 
 ### `CUDA_VERSION`
 Similar to `NVIDIA_REQUIRE_CUDA`, for legacy CUDA images.  
 In addition, if `NVIDIA_REQUIRE_CUDA` is not set, `NVIDIA_VISIBLE_DEVICES` and `NVIDIA_DRIVER_CAPABILITIES` will default to `all`.
-```
 
 ## Copyright and License
 
