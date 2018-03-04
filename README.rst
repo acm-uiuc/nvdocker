@@ -63,7 +63,7 @@ inside the container.
    -  ``utility``: required for using ``nvidia-smi`` and NVML,
    -  ``video``: required for using the Video Codec SDK.
 
-``require_*``
+``require`
 ~~~~~~~~~~~~~
 
 A logical expression to define constraints on the configurations
@@ -84,18 +84,11 @@ Expressions
   constraints are ANDed.
 | Multiple environment variables of the form ``rew`` are ANDed together.
 
-``NVIDIA_DISABLE_REQUIRE``
-^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Single switch to disable all the constraints of the form
-``NVIDIA_REQUIRE_*``.
-
-``NVIDIA_REQUIRE_CUDA``
+``cuda``
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-The version of the CUDA toolkit used by the container. It is an instance
-of the generic ``NVIDIA_REQUIRE_*`` case and it is set by official CUDA
-images. If the version of the NVIDIA driver is insufficient to run this
+The version of the CUDA toolkit used by the container. If the version of the NVIDIA driver is insufficient to run this
 version of CUDA, the container will not be started.
 
 Possible values
@@ -104,13 +97,19 @@ Possible values
 -  ``cuda>=7.5``, ``cuda>=8.0``, ``cuda>=9.0`` …: any valid CUDA version
    in the form ``major.minor``.
 
-``CUDA_VERSION``
+
+``cuda_vesion``
 ~~~~~~~~~~~~~~~~
 
 | Similar to ``NVIDIA_REQUIRE_CUDA``, for legacy CUDA images.
 | In addition, if ``NVIDIA_REQUIRE_CUDA`` is not set,
   ``NVIDIA_VISIBLE_DEVICES`` and ``NVIDIA_DRIVER_CAPABILITIES`` will
   default to ``all``.
+
+``disable_require`
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Single switch to disable all the constraints of the form
 
 Copyright and License
 ---------------------
