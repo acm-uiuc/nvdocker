@@ -12,8 +12,8 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='nvdocker',
-    version='0.0.1',  
-    description='nvdocker is library built on top of the docker-py python sdk to build and run docker containers using nvidia-docker.', 
+    version='0.0.3',  
+    description='nvdocker is library built on top of the docker-py python sdk to build and run docker containers using nvidia-docker. Targets nvidia-docker2', 
     long_description=long_description, 
     url='https://github.com/acm-uiuc/nvdocker', 
     author='ACM@UIUC',

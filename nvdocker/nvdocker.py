@@ -2,62 +2,91 @@
 import docker
 
 class NVDockerClient:
-    client = None
 
-    gpu_devices = ['/dev/nvidiactl', '/dev/nvidia-uvm', '/dev/nvidia1', '/dev/nvidia0']
-    nvidia_driver = 'nvidia-docker'
-    volumes = {'nvidia_driver_387.12':{'bind':'/usr/local/nvidia', 'mode':'ro'},
-               '/vault':              {'bind':'/vault', 'mode':'rw'}}
-    ports = {'8888/tcp':8890,
-             '6006/tcp':6969}
-    
-    def __init__(self):
-        self.client = docker.from_env(version='auto')
+    def __init__(self, config):
+        self.docker_client = docker.from_env(version="auto")
+        self.gpu_devices = None
+        if "gpu_devices" in config:
+            self.gpu_devices = config["gpu_devices"]
+
+    #TODO: Testing on MultiGPU
+    def create_container(self, image, config={}):
+        volumes = None
+        if "volumes" in config:
+            volumes = config["volumes"]
+        ports = None
+        if "ports" in config:
+            ports = config["ports"]
+        workdir = None
+        if "workdir" in config:
+            home_dir = config["workdir"]
+        attached_devices = self.gpu_devices 
+        if "attached_devices" in config:
+            attached_devices = config["attached_devices"]
+        auto_remove = True
+        if "auto_remove" in config:
+            auto_remove = config["auto_remove"]
+        detach = True
+        if "detach" in config:
+            detach = config["detach"]
         
-    def create_container(self, cmd, image=None, is_gpu=False, ports=None, user=""):
-        home_dir = "/vault/"
-        if user != "":
-            home_dir = home_dir + user
-
-        if ports is not None:
-            self.ports['8888/tcp'] = ports[0]
-            self.ports['6006/tcp'] = ports[1]
-
-        if is_gpu:
-            c = self.client.containers.run(image, cmd, auto_remove=True, ports=self.ports, devices=self.gpu_devices, volume_driver=self.nvidia_driver, volumes=self.volumes, detach=True, working_dir=home_dir)
-        else:
-            c = self.client.containers.run(image, cmd, auto_remove=True, detach=True, working_dir=home_dir)
-            
+        c = self.docker_client.containers.run(image, "", auto_remove=auto_remove, ports=ports, devices=attached_devices, volumes=volumes, detach=detach, working_dir=workdir)
         return c.id
 
+
+    def run(self, image, cmd="", config={}):
+        volumes = None
+        if "volumes" in config:
+            volumes = config["volumes"]
+        ports = None
+        if "ports" in config:
+            ports = config["ports"]
+        workdir = None
+        if "workdir" in config:
+            home_dir = config["workdir"]
+        attached_devices = self.gpu_devices 
+        if "attached_devices" in config:
+            attached_devices = config["attached_devices"]
+        auto_remove = True
+        if "auto_remove" in config:
+            auto_remove = config["auto_remove"]
+        detach = True
+        if "detach" in config:
+            detach = config["detach"]
+        
+        c = self.docker_client.containers.run(image, cmd, auto_remove=auto_remove, ports=ports, devices=attached_devices, volumes=volumes, detach=detach, working_dir=workdir)
+        if cmd = "":
+            return c.id
+        else:
+            return c
+
     def build_image(self, path):
-        img = self.client.images.build(path);
+        img = self.docker_client.images.build(path);
         return img
         
     def get_container_logs(self, cid):
-        c = self.client.containers.get(cid)
+        c = self.docker_client.containers.get(cid)
         return c.logs()
 
     def get_all_container_ids(self):
-        return self.client.containers.list()
+        return self.docker_client.containers.list()
     
     def stop_container(self, cid):
-        c = self.client.containers.get(cid)
+        c = self.docker_client.containers.get(cid)
         c.stop()
 
     def start_container(self, cid):
-        c = self.client.containers.get(cid)
+        c = self.docker_client.containers.get(cid)
         c.start()
     
     def start_all_containers(self):
-        for c in self.client.containers.list():
+        for c in self.docker_client.containers.list():
             c.start()
         
     def stop_all_containers(self):    
-        for c in self.client.containers.list():
+        for c in self.docker_client.containers.list():
             c.stop()
 
-    def run_cmd(self, cid, cmd):
-        c = self.client.containers.get(cid)
+    def exec_run(self, cid, cmd):
+        c = self.docker_client.containers.get(cid)
         return c.exec_run(cmd)
-    
