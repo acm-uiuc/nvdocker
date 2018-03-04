@@ -63,7 +63,7 @@ inside the container.
    -  ``utility``: required for using ``nvidia-smi`` and NVML,
    -  ``video``: required for using the Video Codec SDK.
 
-``require`
+``require``
 ~~~~~~~~~~~~~
 
 A logical expression to define constraints on the configurations
