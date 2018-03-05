@@ -21,7 +21,19 @@ class NVDockerClient:
             if arg == "driver_capabilities":
                 environment["NVIDIA_DRIVER_CAPABILITIES"] = kwargs["driver_capabilities"]
             elif arg == "visible_devices" in kwargs:
-                environment["NVIDIA_VISIBLE_DEVICES"] = kwargs["visible_devices"]
+                vis_devices = ""
+                if type(kwargs["visible_devices"]) is list:
+                    if len(kwargs["visible_devices"]) == 1:
+                        vis_devices = str(kwargs["visible_devices"][0])
+                    else:
+                        for dev in kwargs["visible_devices"]:
+                            vis_devices += dev + ','
+                        vis_devices = vis_devices[:-1]
+                elif type(kwargs["visible_devices"]) is str:
+                    vis_devices = kwargs["visible_device"]
+                elif type(kwargs["visible_devices"]) is int:
+                    vis_devices = str(kwargs["visible_devices"])
+                environment["NVIDIA_VISIBLE_DEVICES"] = vis_devices
             elif arg == "disable_require" in kwargs:
                 environment["NVIDIA_DISABLE_REQUIRE"] = kwargs["disable_require"]
             elif arg == "require":
@@ -47,7 +59,6 @@ class NVDockerClient:
                 config[arg] = kwargs[arg]
         config["environment"] = environment
         config["runtime"] = "nvidia"
-        print(config)
         
         c = self.docker_client.containers.run(image, "", **config)
 
