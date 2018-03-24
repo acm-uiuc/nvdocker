@@ -153,7 +153,7 @@ class NVDockerClient:
     @staticmethod
     def list_gpus():
         #output = check_output(["nvidia-smi", "-L"]).decode("utf-8")
-        query_gpu = check_output("nvidia-smi", "--query-gpu=memory.free,memory.used,memory.total --format=csv,noheader")
+        query_gpu = check_output(["nvidia-smi", "--query-gpu=memory.free,memory.used,memory.total --format=csv,noheader"]).decode("utf-8");
         #regex = re.compile(r"GPU (?P<id>\d+):")
         gpus = {}
         id = 0;
