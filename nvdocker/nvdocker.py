@@ -152,13 +152,16 @@ class NVDockerClient:
 
     @staticmethod
     def list_gpus():
-        output = check_output(["nvidia-smi", "-L"]).decode("utf-8") 
-        regex = re.compile(r"GPU (?P<id>\d+):")
-        gpus = []
-        for line in output.strip().split("\n"):
-            m = regex.match(line)
-            assert m, "unable to parse " + line
-            gpus.append(int(m.group("id")))
+        #output = check_output(["nvidia-smi", "-L"]).decode("utf-8")
+        query_gpu = check_output("nvidia-smi", "--query-gpu=memory.free,memory.used,memory.total --format=csv,noheader")
+        #regex = re.compile(r"GPU (?P<id>\d+):")
+        gpus = {}
+        id = 0;
+        for gpu in query_gpu.split("\n"):
+            gpu_info = []
+            for info in gpu:
+                gpu_info.append(info.split(" ")[0]);
+            gpus[id] = gpu_info;
         return gpus
 
     @staticmethod
