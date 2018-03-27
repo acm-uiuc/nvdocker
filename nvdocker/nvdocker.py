@@ -151,32 +151,28 @@ class NVDockerClient:
         return c.exec_run(cmd)
 
     @staticmethod
-    def list_gpus():
+    def get_gpus():
         #output = check_output(["nvidia-smi", "-L"]).decode("utf-8")
-        query_gpu = check_output(["nvidia-smi", "--query-gpu=memory.free,memory.used,memory.total","--format=csv,noheader"]).decode("utf-8");
+        keys = ['memory_free', 'memory_used', 'memory_total']
+        query_gpu = check_output(["nvidia-smi", "--query-gpu=memory.free,memory.used,memory.total","--format=csv,noheader"]).decode("utf-8")
         #regex = re.compile(r"GPU (?P<id>\d+):")
+        query_gpu = query_gpu.strip()
         gpus = {}
-        id = 0;
+        id = 0
         for gpu in query_gpu.split("\n"):
-            gpu_info = []
-            for info in gpu:
-                gpu_info.append(info.split(" ")[0]);
+            gpu_info = {}
+            key_id = 0
+            for info in gpu.split(","):
+                info = info.strip()
+                gpu_info[keys[key_id]] = info.split(" ")[0];
+                key_id += 1
             gpus[id] = gpu_info;
             id += 1
         return gpus
 
     @staticmethod
-    def gpu_memory_usage():
-        output = check_output(["nvidia-smi"]).decode("utf-8")
-        smi_output = output[output.find("GPU Memory"):]
-        rows = smi_output.split("\n")
-        regex = re.compile(r"[|]\s+?(?P<id>\d+)\D+?(?P<pid>\d+).+[ ](?P<usage>\d+)MiB")
-        usage = {gpu_id: 0 for gpu_id in NVDockerClient.list_gpus()}
-        for row in smi_output.split("\n"):
-            gpu = regex.search(row)
-            if not gpu:
-                continue
-            id = int(gpu.group("id"))
-            memory = int(gpu.group("usage"))
-            usage[id] += memory
-        return usage
+    def gpu_memory_usage(id):
+        gpus = NVDockerClient.get_gpus();
+        if id not in gpus.keys():
+            return None
+        return gpus[id]
