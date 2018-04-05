@@ -151,7 +151,7 @@ class NVDockerClient:
         return c.exec_run(cmd)
 
     @staticmethod
-    def get_gpus():
+    def gpu_info():
         #output = check_output(["nvidia-smi", "-L"]).decode("utf-8")
         keys = ['memory_free', 'memory_used', 'memory_total']
         query_gpu = check_output(["nvidia-smi", "--query-gpu=memory.free,memory.used,memory.total","--format=csv,noheader"]).decode("utf-8")
