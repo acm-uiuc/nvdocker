@@ -172,7 +172,21 @@ class NVDockerClient:
 
     @staticmethod
     def gpu_memory_usage(id):
-        gpus = NVDockerClient.get_gpus();
+        gpus = NVDockerClient.get_gpus()
         if id not in gpus.keys():
             return None
         return gpus[id]
+
+    @staticmethod
+    def least_used_gpu():
+        gpus = NVDockerClient.get_gpus()
+        lowest_key = None;
+        for key in gpus.keys():
+            if lowest_key == None and gpus[key]['memory_free'] > 0:
+                lowest_key = key
+            elif gpus[key]['memory_free'] < gpus[lowest_keys]['memory_free']:
+                lowest_key = key
+            else:
+                pass
+
+        return lowest_key
