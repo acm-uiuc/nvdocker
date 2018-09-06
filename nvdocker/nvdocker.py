@@ -69,7 +69,7 @@ class NVDockerClient:
         #defaults
         config = {}
         environment = {}
-       for arg in kwargs:
+        for arg in kwargs:
             if arg == "driver_capabilities":
                 environment["NVIDIA_DRIVER_CAPABILITIES"] = kwargs["driver_capabilities"]
             elif arg == "visible_devices" in kwargs:
