@@ -12,7 +12,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='nvdocker',
-    version='0.0.2a3',  
+    version='0.0.2a4',  
     description='nvdocker is library built on top of the docker-py python sdk to build and run docker containers using nvidia-docker. Targets nvidia-docker2', 
     long_description=long_description, 
     url='https://github.com/acm-uiuc/nvdocker', 

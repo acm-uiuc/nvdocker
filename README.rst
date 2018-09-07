@@ -106,7 +106,7 @@ Possible values
   ``NVIDIA_VISIBLE_DEVICES`` and ``NVIDIA_DRIVER_CAPABILITIES`` will
   default to ``all``.
 
-``disable_require`
+``disable_require``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Single switch to disable all the constraints of the form
