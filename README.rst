@@ -116,8 +116,12 @@ Copyright and License
 
 This project is released under the `UIUC/NCSA
 License <https://github.com/acm-uiuc/nvdocker/blob/masterLICENSE>`__.
+
+
 ``docker-py`` is licensed under the `Apache License
 2.0 <https://github.com/docker/docker-py/blob/master/LICENSE>`__.
+
+
 nvidia-docker and nvidia-container-runtime are licensed under the `BSD
 3-clause
 license <https://github.com/NVIDIA/nvidia-container-runtime/blob/master/LICENSE>`__.
