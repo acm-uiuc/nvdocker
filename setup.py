@@ -4,7 +4,7 @@ from os import path
 
 here = path.abspath(path.dirname(__file__))
 
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
+with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 # Arguments marked as "Required" below must be included for upload to PyPI.
@@ -12,8 +12,8 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='nvdocker',
-    version='0.0.1',  
-    description='nvdocker is library built on top of the docker-py python sdk to build and run docker containers using nvidia-docker.', 
+    version='0.0.2a4',  
+    description='nvdocker is library built on top of the docker-py python sdk to build and run docker containers using nvidia-docker. Targets nvidia-docker2', 
     long_description=long_description, 
     url='https://github.com/acm-uiuc/nvdocker', 
     author='ACM@UIUC',
