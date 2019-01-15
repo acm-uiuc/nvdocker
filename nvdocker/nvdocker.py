@@ -176,10 +176,11 @@ class NVDockerClient:
 
     @staticmethod
     def gpu_memory_usage(id):
-        gpus = NVDockerClient.get_gpus()
+        gpus = NVDockerClient.gpu_info()
         if id not in gpus.keys():
             return None
-        return gpus[id]
+        gpu_handle = gpus[id]["gpu_handle"]
+        return nvmlDeviceGetMemoryInfo(gpu_handle)
 
     @staticmethod
     def least_used_gpu():
