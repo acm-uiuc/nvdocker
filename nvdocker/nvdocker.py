@@ -3,11 +3,24 @@ import os
 from subprocess import check_output
 import re
 import docker
+from pynvml import *
 
 class NVDockerClient:
 
+    nvml_initialized = False
+
     def __init__(self):
         self.docker_client = docker.from_env(version="auto")
+        NVDockerClient.__check_nvml_init()
+
+    """
+    Private method to check if nvml is loaded (and load the library if it isn't loaded)
+    """
+    def __check_nvml_init():
+        if not NVDockerClient.nvml_initialized:
+            nvmlInit()
+            print("NVIDIA Driver Version:", nvmlSystemGetDriverVersion())
+            NVDockerClient.nvml_initialized = True
 
     #TODO: Testing on MultiGPU
     def create_container(self, image, **kwargs):
@@ -152,22 +165,13 @@ class NVDockerClient:
 
     @staticmethod
     def gpu_info():
-        #output = check_output(["nvidia-smi", "-L"]).decode("utf-8")
-        keys = ['memory_free', 'memory_used', 'memory_total']
-        query_gpu = check_output(["nvidia-smi", "--query-gpu=memory.free,memory.used,memory.total","--format=csv,noheader"]).decode("utf-8")
-        #regex = re.compile(r"GPU (?P<id>\d+):")
-        query_gpu = query_gpu.strip()
+        NVDockerClient.__check_nvml_init()
         gpus = {}
-        id = 0
-        for gpu in query_gpu.split("\n"):
-            gpu_info = {}
-            key_id = 0
-            for info in gpu.split(","):
-                info = info.strip()
-                gpu_info[keys[key_id]] = info.split(" ")[0];
-                key_id += 1
-            gpus[id] = gpu_info;
-            id += 1
+        num_gpus = nvmlDeviceGetCount()
+        for i in range(num_gpus):
+            gpu_handle = nvmlDeviceGetHandleByIndex(i)
+            gpu_name = nvmlDeviceGetName(gpu_handle)
+            gpus[i] = {"gpu_handle": gpu_handle, "gpu_name": gpu_name}
         return gpus
 
     @staticmethod
