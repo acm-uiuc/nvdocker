@@ -3,7 +3,7 @@ import os
 from subprocess import check_output
 import re
 import docker
-from pynvml import *
+from py3nvml.py3nvml import *
 
 class NVDockerClient:
 
@@ -180,7 +180,12 @@ class NVDockerClient:
         if id not in gpus.keys():
             return None
         gpu_handle = gpus[id]["gpu_handle"]
-        return nvmlDeviceGetMemoryInfo(gpu_handle)
+        gpu_memory_data = nvmlDeviceGetMemoryInfo(gpu_handle)
+        rv = {}
+        #returns in megabytes
+        rv["used"] = gpu_memory_data.used/1e6
+        rv["free"] = gpu_memory_data.free/1e6
+        return rv
 
     @staticmethod
     def least_used_gpu():
