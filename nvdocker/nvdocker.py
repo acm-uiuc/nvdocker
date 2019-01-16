@@ -183,20 +183,19 @@ class NVDockerClient:
         gpu_memory_data = nvmlDeviceGetMemoryInfo(gpu_handle)
         rv = {}
         #returns in megabytes
-        rv["used"] = gpu_memory_data.used/1e6
-        rv["free"] = gpu_memory_data.free/1e6
+        rv["used_mb"] = gpu_memory_data.used/1e6
+        rv["free_mb"] = gpu_memory_data.free/1e6
         return rv
 
     @staticmethod
     def least_used_gpu():
-        gpus = NVDockerClient.get_gpus()
+        gpus = NVDockerClient.gpu_info()
         lowest_key = None;
-        for key in gpus.keys():
-            if lowest_key == None and gpus[key]['memory_free'] > 0:
-                lowest_key = key
-            elif gpus[key]['memory_free'] < gpus[lowest_keys]['memory_free']:
-                lowest_key = key
-            else:
-                pass
-
+        lowest_used_memory = 1e9;
+        for id in gpus.keys():
+            memory = NVDockerClient.gpu_memory_usage(id)["used_mb"]
+            if lowest_key is None or memory < lowest_used_memory:
+                lowest_key = id
+                lowest_used_memory = memory
         return lowest_key
+
