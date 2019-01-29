@@ -198,4 +198,3 @@ class NVDockerClient:
                 lowest_key = id
                 lowest_used_memory = memory
         return lowest_key
-
