@@ -3,11 +3,24 @@ import os
 from subprocess import check_output
 import re
 import docker
+from py3nvml.py3nvml import *
 
 class NVDockerClient:
 
+    nvml_initialized = False
+
     def __init__(self):
         self.docker_client = docker.from_env(version="auto")
+        NVDockerClient.__check_nvml_init()
+
+    """
+    Private method to check if nvml is loaded (and load the library if it isn't loaded)
+    """
+    def __check_nvml_init():
+        if not NVDockerClient.nvml_initialized:
+            nvmlInit()
+            print("NVIDIA Driver Version:", nvmlSystemGetDriverVersion())
+            NVDockerClient.nvml_initialized = True
 
     #TODO: Testing on MultiGPU
     def create_container(self, image, **kwargs):
@@ -151,28 +164,37 @@ class NVDockerClient:
         return c.exec_run(cmd)
 
     @staticmethod
-    def list_gpus():
-        output = check_output(["nvidia-smi", "-L"]).decode("utf-8") 
-        regex = re.compile(r"GPU (?P<id>\d+):")
-        gpus = []
-        for line in output.strip().split("\n"):
-            m = regex.match(line)
-            assert m, "unable to parse " + line
-            gpus.append(int(m.group("id")))
+    def gpu_info():
+        NVDockerClient.__check_nvml_init()
+        gpus = {}
+        num_gpus = nvmlDeviceGetCount()
+        for i in range(num_gpus):
+            gpu_handle = nvmlDeviceGetHandleByIndex(i)
+            gpu_name = nvmlDeviceGetName(gpu_handle)
+            gpus[i] = {"gpu_handle": gpu_handle, "gpu_name": gpu_name}
         return gpus
 
     @staticmethod
-    def gpu_memory_usage():
-        output = check_output(["nvidia-smi"]).decode("utf-8")
-        smi_output = output[output.find("GPU Memory"):]
-        rows = smi_output.split("\n")
-        regex = re.compile(r"[|]\s+?(?P<id>\d+)\D+?(?P<pid>\d+).+[ ](?P<usage>\d+)MiB")
-        usage = {gpu_id: 0 for gpu_id in NVDockerClient.list_gpus()}
-        for row in smi_output.split("\n"):
-            gpu = regex.search(row)
-            if not gpu:
-                continue
-            id = int(gpu.group("id"))
-            memory = int(gpu.group("usage"))
-            usage[id] += memory
-        return usage
+    def gpu_memory_usage(id):
+        gpus = NVDockerClient.gpu_info()
+        if id not in gpus.keys():
+            return None
+        gpu_handle = gpus[id]["gpu_handle"]
+        gpu_memory_data = nvmlDeviceGetMemoryInfo(gpu_handle)
+        rv = {}
+        #returns in megabytes
+        rv["used_mb"] = gpu_memory_data.used/1e6
+        rv["free_mb"] = gpu_memory_data.free/1e6
+        return rv
+
+    @staticmethod
+    def least_used_gpu():
+        gpus = NVDockerClient.gpu_info()
+        lowest_key = None;
+        lowest_used_memory = 1e9;
+        for id in gpus.keys():
+            memory = NVDockerClient.gpu_memory_usage(id)["used_mb"]
+            if lowest_key is None or memory < lowest_used_memory:
+                lowest_key = id
+                lowest_used_memory = memory
+        return lowest_key
