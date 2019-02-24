@@ -170,8 +170,8 @@ class NVDockerClient:
     def docker_image_list(self, **kwargs):
         return self.docker_client.images.list(kwargs)
 
-    def docker_image_search(self, repo, tag):
-        return self.docker_client.images.search(repo, tag)
+    def docker_image_search(self, image):
+        return self.docker_client.images.search(image)
 
     @staticmethod
     def gpu_info():
