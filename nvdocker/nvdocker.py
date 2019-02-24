@@ -164,8 +164,8 @@ class NVDockerClient:
         c = self.docker_client.containers.get(cid)
         return c.exec_run(cmd)
 
-    def docker_image_pull(self, repository):
-        return self.docker_client.images.pull(repository)
+    def docker_image_pull(self, repo, tag):
+        return self.docker_client.images.pull(repo, tag)
 
     def docker_image_list(self, **kwargs):
         return self.docker_client.images.list(kwargs)
