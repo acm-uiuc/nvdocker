@@ -1,12 +1,11 @@
-
-import os 
+import os
 from subprocess import check_output
 import re
 import docker
 from py3nvml.py3nvml import *
 
-class NVDockerClient:
 
+class NVDockerClient:
     nvml_initialized = False
 
     def __init__(self):
@@ -16,18 +15,19 @@ class NVDockerClient:
     """
     Private method to check if nvml is loaded (and load the library if it isn't loaded)
     """
+
     def __check_nvml_init():
         if not NVDockerClient.nvml_initialized:
             nvmlInit()
             print("NVIDIA Driver Version:", nvmlSystemGetDriverVersion())
             NVDockerClient.nvml_initialized = True
 
-    #TODO: Testing on MultiGPU
+    # TODO: Testing on MultiGPU
     def create_container(self, image, **kwargs):
-        #defaults
+        # defaults
         config = {
-            "auto_remove":False,
-            "detach":True
+            "auto_remove": False,
+            "detach": True
         }
         environment = {}
         for arg in kwargs:
@@ -57,29 +57,29 @@ class NVDockerClient:
                 if "arch" in kwargs["require"]:
                     environment["NVIDIA_REQUIRE_ARCH"] = kwargs["require"]["arch"]
             elif arg == "cuda_version":
-                print("WARNING: the CUDA_VERSION enviorment variable is a legacy variable, consider moving to NVIDIA_REQUIRE_CUDA")
+                print(
+                    "WARNING: the CUDA_VERSION enviorment variable is a legacy variable, consider moving to NVIDIA_REQUIRE_CUDA")
                 environment["CUDA_VERSION"] = kwargs["cuda_version"]
             elif arg == "environment":
                 if type(kwargs["environment"]) is dict:
-                    for k,v in kwargs["environment"]:
+                    for k, v in kwargs["environment"]:
                         environment[k] = v
                 elif type(kwargs["environment"]) is list:
                     for e in kwargs["environment"]:
                         kv = e.split("=")
-                        assert(len(kv) == 2), "Does not follow the format SOMEVAR=xxx"
+                        assert (len(kv) == 2), "Does not follow the format SOMEVAR=xxx"
                         environment[kv[0]] = kv[1]
             else:
                 config[arg] = kwargs[arg]
         config["environment"] = environment
         config["runtime"] = "nvidia"
-        
+
         c = self.docker_client.containers.run(image, "", **config)
 
         return c
 
-
     def run(self, image, cmd="", **kwargs):
-        #defaults
+        # defaults
         config = {}
         environment = {}
         for arg in kwargs:
@@ -109,16 +109,17 @@ class NVDockerClient:
                 if "arch" in kwargs["require"]:
                     environment["NVIDIA_REQUIRE_ARCH"] = kwargs["require"]["arch"]
             elif arg == "cuda_version":
-                print("WARNING: the CUDA_VERSION enviorment variable is a legacy variable, consider moving to NVIDIA_REQUIRE_CUDA")
+                print(
+                    "WARNING: the CUDA_VERSION enviorment variable is a legacy variable, consider moving to NVIDIA_REQUIRE_CUDA")
                 environment["CUDA_VERSION"] = kwargs["cuda_version"]
             elif arg == "environment":
                 if type(kwargs["environment"]) is dict:
-                    for k,v in kwargs["environment"]:
+                    for k, v in kwargs["environment"]:
                         environment[k] = v
                 elif type(kwargs["environment"]) is list:
                     for e in kwargs["environment"]:
                         kv = e.split("=")
-                        assert(len(kv) == 2), "Does not follow the format SOMEVAR=xxx"
+                        assert (len(kv) == 2), "Does not follow the format SOMEVAR=xxx"
                         environment[kv[0]] = kv[1]
             else:
                 config[arg] = kwargs[arg]
@@ -135,14 +136,14 @@ class NVDockerClient:
     def build_image(self, path):
         img = self.docker_client.images.build(path);
         return img
-        
+
     def get_container_logs(self, cid):
         c = self.docker_client.containers.get(cid)
         return c.logs()
 
     def get_all_container_ids(self):
         return self.docker_client.containers.list()
-    
+
     def stop_container(self, cid):
         c = self.docker_client.containers.get(cid)
         c.stop()
@@ -150,12 +151,12 @@ class NVDockerClient:
     def start_container(self, cid):
         c = self.docker_client.containers.get(cid)
         c.start()
-    
+
     def start_all_containers(self):
         for c in self.docker_client.containers.list():
             c.start()
-        
-    def stop_all_containers(self):    
+
+    def stop_all_containers(self):
         for c in self.docker_client.containers.list():
             c.stop()
 
@@ -169,8 +170,8 @@ class NVDockerClient:
     def docker_image_list(self, **kwargs):
         return self.docker_client.images.list(kwargs)
 
-    def docker_image_search(self, **kwargs):
-        return self.docker_client.images.search(kwargs)
+    def docker_image_search(self, repo, tag):
+        return self.docker_client.images.search(repo, tag)
 
     @staticmethod
     def gpu_info():
@@ -191,9 +192,9 @@ class NVDockerClient:
         gpu_handle = gpus[id]["gpu_handle"]
         gpu_memory_data = nvmlDeviceGetMemoryInfo(gpu_handle)
         rv = {}
-        #returns in megabytes
-        rv["used_mb"] = gpu_memory_data.used/1e6
-        rv["free_mb"] = gpu_memory_data.free/1e6
+        # returns in megabytes
+        rv["used_mb"] = gpu_memory_data.used / 1e6
+        rv["free_mb"] = gpu_memory_data.free / 1e6
         return rv
 
     @staticmethod
